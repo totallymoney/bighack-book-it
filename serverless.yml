@@ -1,0 +1,172 @@
+service: bighack-book-it
+
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js'   # Name of webpack configuration file
+    includeModules: false   # Node modules configuration for packaging
+    packager: 'npm'   # Packager that will be used to package your external modules
+  backendBucketName: 
+    "Fn::ImportValue": ${self:provider.stage}-BackendBucketName
+    environment:
+  slackClientId: ${ssm:${self:provider.stage}-BookItSlackClientId}
+  slackClientSecret: ${ssm:${self:provider.stage}-BookItSlackClientSecret}
+  slackBotToken: ${ssm:${self:provider.stage}-BookItSlackBotToken}
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'stage'}
+  region: ${opt:region, 'eu-west-2'}
+  profile: ${opt:profile, 'tmhackday'}
+  
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "Fn::GetAtt": [ EventTypesTable, Arn ]
+        - "Fn::GetAtt": [ EventsTable, Arn ]
+  environment:
+    AWS_PROFILE: ${self:provider.profile}
+
+functions:
+  authorize:
+    handler: src/authorize.handle
+    name: bighack-book-it-authorize-${self:provider.stage}
+    memorySize: 128
+    timeout: 28
+    events:
+      - http: 
+          path: /authorize
+          method: ANY
+          cors: 
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - Authorization
+              - pragma
+              - cache-control
+            allowCredentials: false
+    environment:
+      SLACK_CLIENT_ID: ${self:custom.slackClientId}
+      SLACK_CLIENT_SECRET: ${self:custom.slackClientSecret}
+  signUpForEvent:
+    handler: src/signUpForEvent.handle
+    name: bighack-book-it-sign-up-for-event-${self:provider.stage}
+    memorySize: 128
+    timeout: 28
+    events:
+      - http: 
+          path: /sign-up
+          method: POST
+          cors: 
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - Authorization
+              - pragma
+              - cache-control
+            allowCredentials: false
+    environment:
+      EVENTS_TABLE: '${self:provider.stage}-BigHack-Book-It-Events'
+      EVENT_TYPES_TABLE: '${self:provider.stage}-BigHack-Book-It-EventTypes'
+  appInteraction:
+    handler: src/appInteraction.handle
+    name: bighack-book-it-app-interaction-${self:provider.stage}
+    memorySize: 128
+    timeout: 28
+    events:
+      - http: 
+          path: /message
+          method: POST
+          cors: 
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - Authorization
+              - pragma
+              - cache-control
+            allowCredentials: false
+    environment:
+      EVENTS_TABLE: '${self:provider.stage}-BigHack-Book-It-Events'
+      EVENT_TYPES_TABLE: '${self:provider.stage}-BigHack-Book-It-EventTypes'
+  resignFromEvent:
+    handler: src/resignFromEvent.handle
+    name: bighack-book-it-resign-from-event-${self:provider.stage}
+    memorySize: 128
+    timeout: 28
+    events:
+      - http: 
+          path: /resign
+          method: POST
+          cors: 
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - Authorization
+              - pragma
+              - cache-control
+            allowCredentials: false
+    environment:
+      EVENTS_TABLE: '${self:provider.stage}-BigHack-Book-It-Events'
+      EVENT_TYPES_TABLE: '${self:provider.stage}-BigHack-Book-It-EventTypes'
+  newEventForm:
+    handler: src/newEvent.handle
+    name: bighack-book-it-new-event-${self:provider.stage}
+    memorySize: 128
+    timeout: 28
+    events:
+      - http: 
+          path: /new-event
+          method: POST
+          cors: 
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - Authorization
+              - pragma
+              - cache-control
+            allowCredentials: false
+    environment:
+      EVENTS_TABLE: '${self:provider.stage}-BigHack-Book-It-Events'
+      EVENT_TYPES_TABLE: '${self:provider.stage}-BigHack-Book-It-EventTypes'
+      SLACK_BOT_TOKEN: ${self:custom.slackBotToken}
+  notificator:
+    handler: src/notificator.handle
+    name: bighack-book-it-notificator-${self:provider.stage}
+    memorySize: 128
+    timeout: 28
+    events:
+      - schedule: rate(5 minutes)
+
+    environment:
+      EVENTS_TABLE: '${self:provider.stage}-BigHack-Book-It-Events'
+      EVENT_TYPES_TABLE: '${self:provider.stage}-BigHack-Book-It-EventTypes'
+resources:
+  Resources:
+    EventsTable:  
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-BigHack-Book-It-Events
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    EventTypesTable:  
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-BigHack-Book-It-EventTypes
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
