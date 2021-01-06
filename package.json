@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/mediaingenuity/bighack-book-it#readme",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "lodash": "^4.17.15",
     "moment-timezone": "^0.5.31",
     "querystring": "^0.2.0",
