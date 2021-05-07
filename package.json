@@ -22,7 +22,7 @@
     "moment-timezone": "^0.5.31",
     "querystring": "^0.2.0",
     "random-seed": "^0.3.0",
-    "underscore": "^1.10.2",
+    "underscore": "^1.12.1",
     "uuidv4": "^6.1.0"
   },
   "devDependencies": {
