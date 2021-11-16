@@ -26,6 +26,6 @@
     "uuidv4": "^6.1.0"
   },
   "devDependencies": {
-    "aws-sdk": "^2.694.0"
+    "aws-sdk": "^2.814.0"
   }
 }
