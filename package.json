@@ -19,7 +19,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "lodash": "^4.17.15",
-    "moment-timezone": "^0.5.31",
+    "moment-timezone": "^0.5.35",
     "querystring": "^0.2.0",
     "random-seed": "^0.3.0",
     "underscore": "^1.10.2",
